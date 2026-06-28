@@ -1,54 +1,130 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shnayim Mikra</title>
+
   <style>
-    body { font-family: Arial; text-align: center; padding: 30px; }
-    button { font-size: 22px; padding: 12px 22px; margin: 8px; }
-    #text { font-size: 32px; direction: rtl; margin: 30px; line-height: 1.6; }
-    #status { font-size: 18px; color: #555; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 24px;
+      background: #f7f7f7;
+    }
+
+    .card {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 24px;
+      border-radius: 18px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      margin-bottom: 8px;
+    }
+
+    #status {
+      font-size: 18px;
+      color: #555;
+      margin: 14px 0;
+    }
+
+    #text {
+      font-size: 34px;
+      direction: rtl;
+      line-height: 1.7;
+      margin: 30px 0;
+      min-height: 150px;
+    }
+
+    button {
+      font-size: 22px;
+      padding: 12px 24px;
+      margin: 8px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .play {
+      background: #2e7d32;
+      color: white;
+    }
+
+    .pause {
+      background: #c62828;
+      color: white;
+    }
+
+    .small {
+      font-size: 15px;
+      color: #777;
+      margin-top: 18px;
+    }
   </style>
 </head>
+
 <body>
+  <div class="card">
+    <h1>שנים מקרא ואחד תרגום</h1>
+    <div id="status">Ready — Parshas Pinchas</div>
 
-  <h1>שנים מקרא ואחד תרגום</h1>
+    <div id="text">
+      פִּינְחָס בֶּן אֶלְעָזָר בֶּן אַהֲרֹן הַכֹּהֵן
+    </div>
 
-  <div id="status">Ready</div>
+    <button class="play" onclick="start()">▶️ Play</button>
+    <button class="pause" onclick="pausePlayer()">⏸ Pause</button>
 
-  <div id="text">בְּרֵאשִׁית בָּרָא אֱלֹקִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ</div>
-
-  <button onclick="start()">▶️ Play</button>
-  <button onclick="pause()">⏸ Pause</button>
+    <div class="small">
+      Sequence: Hebrew → pause → Hebrew → pause → Onkelos → pause → next pasuk
+    </div>
+  </div>
 
 <script>
 const pesukim = [
   {
-    hebrew: "בְּרֵאשִׁית בָּרָא אֱלֹקִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ",
-    targum: "בְּקַדְמִין בְּרָא יְיָ יָת שְׁמַיָּא וְיָת אַרְעָא"
+    hebrew: "פִּינְחָס בֶּן אֶלְעָזָר בֶּן אַהֲרֹן הַכֹּהֵן הֵשִׁיב אֶת חֲמָתִי מֵעַל בְּנֵי יִשְׂרָאֵל",
+    targum: "פִּינְחָס בַּר אֶלְעָזָר בַּר אַהֲרֹן כַּהֲנָא אֲתֵיב יָת רוּגְזִי מֵעַל בְּנֵי יִשְׂרָאֵל"
   },
   {
-    hebrew: "וְהָאָרֶץ הָיְתָה תֹהוּ וָבֹהוּ",
-    targum: "וְאַרְעָא הֲוָת צָדְיָא וְרֵיקַנְיָא"
+    hebrew: "בְּקַנְאוֹ אֶת קִנְאָתִי בְּתוֹכָם וְלֹא כִלִּיתִי אֶת בְּנֵי יִשְׂרָאֵל בְּקִנְאָתִי",
+    targum: "בְּקַנָּאוּתֵיהּ יָת קַנָּאוּתִי בֵּינֵיהוֹן וְלָא שֵׁיצֵיתִי יָת בְּנֵי יִשְׂרָאֵל בְּקַנָּאוּתִי"
+  },
+  {
+    hebrew: "לָכֵן אֱמֹר הִנְנִי נֹתֵן לוֹ אֶת בְּרִיתִי שָׁלוֹם",
+    targum: "בְּכֵן אֱמַר הָא אֲנָא יָהֵיב לֵיהּ יָת קְיָמִי שְׁלָם"
   }
 ];
 
 let currentPasuk = 0;
 let running = false;
 
+function prepareForSpeech(text) {
+  return text
+    .replace(/יְיָ/g, "Hashem")
+    .replace(/יי/g, "Hashem")
+    .replace(/ה'/g, "Hashem");
+}
+
 function getPauseSeconds(text) {
   const wordCount = text.trim().split(/\s+/).length;
   return wordCount <= 6 ? 6 : 6 + ((wordCount - 6) * 0.5);
 }
 
-function speak(text, label) {
+function speak(displayText, speechText, label) {
   return new Promise(resolve => {
     if (!running) return resolve();
 
-    document.getElementById("text").innerText = text;
+    document.getElementById("text").innerText = displayText;
     document.getElementById("status").innerText = label;
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(speechText);
     utterance.lang = "he-IL";
     utterance.rate = 0.65;
 
@@ -62,7 +138,7 @@ function waitSeconds(seconds, label) {
     if (!running) return resolve();
 
     document.getElementById("status").innerText =
-      label + " (" + seconds + " seconds)";
+      label + " — " + seconds + " seconds";
 
     setTimeout(resolve, seconds * 1000);
   });
@@ -72,32 +148,38 @@ async function playCurrentPasuk() {
   while (running && currentPasuk < pesukim.length) {
     const p = pesukim[currentPasuk];
 
-    await speak(p.hebrew, "Hebrew - first time");
-    await waitSeconds(getPauseSeconds(p.hebrew), "Repeat it now");
+    await speak(p.hebrew, prepareForSpeech(p.hebrew), "Hebrew — first time");
+    await waitSeconds(getPauseSeconds(p.hebrew), "Repeat Hebrew now");
 
-    await speak(p.hebrew, "Hebrew - second time");
-    await waitSeconds(getPauseSeconds(p.hebrew), "Repeat it now");
+    await speak(p.hebrew, prepareForSpeech(p.hebrew), "Hebrew — second time");
+    await waitSeconds(getPauseSeconds(p.hebrew), "Repeat Hebrew now");
 
-    await speak(p.targum, "Onkelos");
-    await waitSeconds(getPauseSeconds(p.targum), "Repeat the Onkelos now");
+    await speak(p.targum, prepareForSpeech(p.targum), "Onkelos");
+    await waitSeconds(getPauseSeconds(p.targum), "Repeat Onkelos now");
 
     currentPasuk++;
   }
 
   if (currentPasuk >= pesukim.length) {
-    document.getElementById("status").innerText = "Finished";
     running = false;
+    document.getElementById("status").innerText = "Finished";
   }
 }
 
 function start() {
   if (running) return;
+
   running = true;
   speechSynthesis.cancel();
+
+  if (currentPasuk >= pesukim.length) {
+    currentPasuk = 0;
+  }
+
   playCurrentPasuk();
 }
 
-function pause() {
+function pausePlayer() {
   running = false;
   speechSynthesis.cancel();
   document.getElementById("status").innerText = "Paused";
