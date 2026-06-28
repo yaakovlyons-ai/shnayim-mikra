@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Shnayim Mikra</title>
+  <style>
+    body { font-family: Arial; text-align: center; padding: 30px; }
+    button { font-size: 22px; padding: 12px 22px; margin: 8px; }
+    #text { font-size: 32px; direction: rtl; margin: 30px; line-height: 1.6; }
+    #status { font-size: 18px; color: #555; }
+  </style>
+</head>
+<body>
+
+  <h1>שנים מקרא ואחד תרגום</h1>
+
+  <div id="status">Ready</div>
+
+  <div id="text">בְּרֵאשִׁית בָּרָא אֱלֹקִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ</div>
+
+  <button onclick="start()">▶️ Play</button>
+  <button onclick="pause()">⏸ Pause</button>
+
+<script>
+const pesukim = [
+  {
+    hebrew: "בְּרֵאשִׁית בָּרָא אֱלֹקִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ",
+    targum: "בְּקַדְמִין בְּרָא יְיָ יָת שְׁמַיָּא וְיָת אַרְעָא"
+  },
+  {
+    hebrew: "וְהָאָרֶץ הָיְתָה תֹהוּ וָבֹהוּ",
+    targum: "וְאַרְעָא הֲוָת צָדְיָא וְרֵיקַנְיָא"
+  }
+];
+
+let currentPasuk = 0;
+let running = false;
+
+function getPauseSeconds(text) {
+  const wordCount = text.trim().split(/\s+/).length;
+  return wordCount <= 6 ? 6 : 6 + ((wordCount - 6) * 0.5);
+}
+
+function speak(text, label) {
+  return new Promise(resolve => {
+    if (!running) return resolve();
+
+    document.getElementById("text").innerText = text;
+    document.getElementById("status").innerText = label;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "he-IL";
+    utterance.rate = 0.65;
+
+    utterance.onend = resolve;
+    speechSynthesis.speak(utterance);
+  });
+}
+
+function waitSeconds(seconds, label) {
+  return new Promise(resolve => {
+    if (!running) return resolve();
+
+    document.getElementById("status").innerText =
+      label + " (" + seconds + " seconds)";
+
+    setTimeout(resolve, seconds * 1000);
+  });
+}
+
+async function playCurrentPasuk() {
+  while (running && currentPasuk < pesukim.length) {
+    const p = pesukim[currentPasuk];
+
+    await speak(p.hebrew, "Hebrew - first time");
+    await waitSeconds(getPauseSeconds(p.hebrew), "Repeat it now");
+
+    await speak(p.hebrew, "Hebrew - second time");
+    await waitSeconds(getPauseSeconds(p.hebrew), "Repeat it now");
+
+    await speak(p.targum, "Onkelos");
+    await waitSeconds(getPauseSeconds(p.targum), "Repeat the Onkelos now");
+
+    currentPasuk++;
+  }
+
+  if (currentPasuk >= pesukim.length) {
+    document.getElementById("status").innerText = "Finished";
+    running = false;
+  }
+}
+
+function start() {
+  if (running) return;
+  running = true;
+  speechSynthesis.cancel();
+  playCurrentPasuk();
+}
+
+function pause() {
+  running = false;
+  speechSynthesis.cancel();
+  document.getElementById("status").innerText = "Paused";
+}
+</script>
+
+</body>
+</html>
